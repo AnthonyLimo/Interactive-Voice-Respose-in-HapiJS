@@ -1,50 +1,64 @@
-'use strict'
-
 const Hapi = require('hapi')
 const xmlbuilder = require('xmlbuilder')
+// const actions = require('./actions')
 
 const server = Hapi.Server({
   host: process.env.HOST,
   port: process.env.PORT
 })
 
-const fileUrl = ''
-
-const sayPlayActionXMl = xmlbuilder
+const entrySayActionXMl = xmlbuilder
   .create('Response')
-  .elem('GetDigits', { timeout: '30', finishOnKey: '#', callbackURL: '' })
-  .elem('Play', { url: '' })
-  .elem(
+  .ele('GetDigits', { timeout: '30', finishOnKey: '#', callbackURL: '' })
+  .ele(
     'Say',
+    { voice: 'woman' },
     'Hi, welcome to the Africas Talking Freelance Developer Program demo app. We have a little question for you. How old is Africas Talking? Dial in your guess and press hash'
   )
   .end({ pretty: true })
 
-const init = async () => {
-  await server
-    .register(
-      { plugin: require('./routes/Users') },
-      {
-        routes: {
-          prefix: '/voice'
-        }
-      }
-    )
-    .catch(e => {
-      console.log(e)
-    })
-}
+const successSayActionXMl = xmlbuilder
+  .create('Response')
+  .ele(
+    'Say',
+    { voice: 'woman' },
+    'Awesome! You got it right! Africas Talking has been around for almost a decade!'
+  )
+  .end({ pretty: true })
+
+const errorHighSayActionXML = xmlbuilder
+  .create('Response')
+  .ele(
+    'Say',
+    { voice: 'woman' },
+    'Hi, sorry, thats not quite it. Guess a little lower. Call back to try again. Goodbye.'
+  )
+  .end({ pretty: true })
+
+const errorLowSayActionXML = xmlbuilder
+  .create('Response')
+  .ele(
+    'Say',
+    { voice: 'woman' },
+    'Hi, sorry, thats not quite it. Guess a little higher. Call back to try again. Goodbye.'
+  )
+  .end({ pretty: true })
+
+const errorSayActionXML = xmlbuilder
+  .create('Response')
+  .ele(
+    'Say',
+    { voice: 'woman' },
+    'Hi, sorry, thats not quite it. Something is wrong with the input you provided. Call back to try again. Goodbye.'
+  )
+  .end({ pretty: true })
 
 server.route({
   method: 'POST',
   path: '/',
   handler: async (req, h) => {
-    try {
-      callAction = sayPlayActionXML
-      h.response(callAction)
-    } catch (e) {
-      h.response(e).code(500)
-    }
+    callAction = entrySayActionXMl
+    return h.response(callAction)
   }
 })
 
@@ -61,7 +75,20 @@ server.route({
   path: '/voice/say',
   handler: async (req, h) => {
     try {
-    } catch (e) {}
+      digits = parseInt(req.payload.dtmfDigits)
+      // Adding checks and tasks
+      if (digits == 9) {
+        return h.response(successSayActionXMl)
+      } else if (digits < 9) {
+        return h.response(errorLowSayActionXML)
+      } else if (digits > 9) {
+        return h.response(errorHighSayActionXML)
+      } else {
+        return h.response(errorSayActionXML)
+      }
+    } catch (e) {
+      h.response(e).code(500)
+    }
   }
 })
 
