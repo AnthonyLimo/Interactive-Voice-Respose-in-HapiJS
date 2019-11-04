@@ -1,12 +1,13 @@
 const Hapi = require('hapi')
 const xmlbuilder = require('xmlbuilder')
-// const actions = require('./actions')
 
+// Initialize server
 const server = Hapi.Server({
   host: process.env.HOST,
   port: process.env.PORT
 })
 
+// When to say what
 const entrySayActionXMl = xmlbuilder
   .create('Response')
   .ele('GetDigits', { timeout: '30', finishOnKey: '#', callbackURL: '' })
@@ -53,6 +54,7 @@ const errorSayActionXML = xmlbuilder
   )
   .end({ pretty: true })
 
+// Routes and functions
 server.route({
   method: 'POST',
   path: '/',
@@ -92,4 +94,5 @@ server.route({
   }
 })
 
+// Server starting
 server.start()
