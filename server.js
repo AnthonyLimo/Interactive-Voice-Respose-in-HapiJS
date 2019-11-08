@@ -1,12 +1,6 @@
 const Hapi = require('hapi')
 const xmlbuilder = require('xmlbuilder')
 
-// Initialize server
-const server = Hapi.Server({
-  host: process.env.HOST,
-  port: process.env.PORT
-})
-
 // When to say what
 const entrySayActionXMl = xmlbuilder
   .create('Response')
@@ -54,45 +48,58 @@ const errorSayActionXML = xmlbuilder
   )
   .end({ pretty: true })
 
-// Routes and functions
-server.route({
-  method: 'POST',
-  path: '/',
-  handler: async (req, h) => {
-    callAction = entrySayActionXMl
-    return h.response(callAction)
-  }
-})
+const init = async () => {
+  const server = Hapi.Server({
+    port: 3000,
+    host: 'localhost'
+  })
 
-server.route({
-  method: 'GET',
-  path: '/',
-  handler: async (req, h) => {
-    return h.response('Everything is okay').code(201)
-  }
-})
-
-server.route({
-  method: 'POST',
-  path: '/voice/say',
-  handler: async (req, h) => {
-    try {
-      digits = parseInt(req.payload.dtmfDigits)
-      // Adding checks and tasks
-      if (digits == 9) {
-        return h.response(successSayActionXMl)
-      } else if (digits < 9) {
-        return h.response(errorLowSayActionXML)
-      } else if (digits > 9) {
-        return h.response(errorHighSayActionXML)
-      } else {
-        return h.response(errorSayActionXML)
-      }
-    } catch (e) {
-      h.response(e).code(500)
+  server.route({
+    method: 'POST',
+    path: '/',
+    handler: async (req, h) => {
+      callAction = entrySayActionXMl
+      return h.response(callAction)
     }
-  }
+  })
+
+  server.route({
+    method: 'GET',
+    path: '/',
+    handler: async (req, h) => {
+      return h.response('Everything is okay').code(201)
+    }
+  })
+
+  server.route({
+    method: 'POST',
+    path: '/voice/say',
+    handler: async (req, h) => {
+      try {
+        digits = parseInt(req.payload.dtmfDigits)
+        // Adding checks and tasks
+        if (digits == 9) {
+          return h.response(successSayActionXMl)
+        } else if (digits < 9) {
+          return h.response(errorLowSayActionXML)
+        } else if (digits > 9) {
+          return h.response(errorHighSayActionXML)
+        } else {
+          return h.response(errorSayActionXML)
+        }
+      } catch (e) {
+        h.response(e).code(500)
+      }
+    }
+  })
+
+  await server.start()
+  console.log(`Server running on port: ${server.info.uri}`)
+}
+
+process.on('unhandledRejection', error => {
+  console.log(`Houston, we have a problem: ${error}`)
+  process.exit(1)
 })
 
-// Server starting
-server.start()
+init()
